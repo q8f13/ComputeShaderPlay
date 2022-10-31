@@ -1,0 +1,148 @@
+// Each #kernel tells which function to compile; you can have many kernels
+// #pragma kernel CSInit
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+// Texture2D<float4> Middle;
+RWTexture2D<float4> Result;
+float Resolution;
+
+// RWStructuredBuffer<float> _Grid;
+// RWStructuredBuffer<float> _GridMiddle;
+
+static float2 NEIGHBOUR[8] = {float2(-1,-1), float2(0, -1), float2(1, -1),
+                        float2(-1,0),                   float2(1, 0),
+                        float2(-1,1), float2(0, 1), float2(1, 1)};
+// static uint COORDS[3] = {}
+
+int CountNeighbour(float2 coord)
+{
+    int count = 0;
+    for(int i=0;i<8;i++)
+    {
+        float2 idx = coord.xy + NEIGHBOUR[i];
+        // if(idx.x < 0.0 || idx.y < 0.0 || idx.x >= Resolution || idx.y >= Resolution)
+        //     continue;
+        if(Result[idx].x > 0)
+            count++;
+    }
+    return count;
+}
+
+float2 GetUV (uint3 id) {
+	return id.xy / Resolution;
+	// return (id.xy + 0.5) * (2.0 / Resolution) - 1.0;
+}
+
+float rand(float2 co){
+    return 0.5+(frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453))*0.5;
+}
+
+// [numthreads(8,8,1)]
+// void CSInit(uint3 id : SV_DispatchThreadID)
+// {
+//     // float rnd = rand(id.xy);
+//     // Result[id.xy] = rnd > .75 ? float4(1,1,1,1) : float4(0,0,0,1);
+// }
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    float x = id.x / Resolution;
+    float y = id.y / Resolution;
+
+    // float2 uv = GetUV(id);
+    // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+    // _Grid[id.x + id.y * Resolution] = float(sin(x) > 0.5);
+    // float flag = 0.0;
+    // int count = CountNeighbour(id.xy);
+    int count = 0;
+
+    // for (int x = -1; x <= 1; x++) {
+    //     for (int y = -1; y <= 1; y++) {
+    //         if (x == 0 && y == 0) continue;            
+    //         if (Result[id.xy + float2(x,y)].x > 0) count++;
+    //     }
+    // }
+    // GroupMemoryBarrierWithGroupSync();
+    for(int i=0;i<8;i++)
+    {
+        float2 idx = id.xy + float2(NEIGHBOUR[i]);
+        if(idx.x < 0.0 || idx.y < 0.0 || idx.x >= Resolution || idx.y >= Resolution)
+            continue;
+        if(Result[idx].x > 0)
+            count++;
+        // GroupMemoryBarrierWithGroupSync();
+    }
+    // return count;
+
+    // float count = CountNeighbour(float2(id.x, id.y));
+    // float count = CountNeighbour(float2(x, y));
+    // float flag = 
+    // float flag = _Grid[x + y * Resolution];
+    // float p = _Grid[id.x + id.y * Resolution];
+    // float flag = 0.0;
+    // float flag = (float(id.y) * Resolution) / (512.0 * 512.0);
+    // float flag = (float(id.x) + float(id.y) * Resolution) / (512.0 * 512.0);
+    // Result[id.xy] = float4(uv.x, uv.y, 0.0, 1.0);
+    // _Grid[id.x + id.y * Resolution] = count / 8
+    // float flag = _Grid[id.x + id.y * Resolution];
+    // Result[id.xy] = float4(x, y, 0.0, 1.0);
+    // Result[id.xy] = float4(0.0, 0.0, 0.0, 1.0);
+    // float p = _Grid[id.x ]
+
+    // float count = CountNeighbour(float2(id.x, id.y));
+    // float flag = 0.0;
+    // float flag = count / 8.0;
+    // float flag = Middle[uint2(id.x,id.y)].x;
+    // if(flag > 0.5)
+    // {
+    //     if(count == 2.0 || count == 3.0)
+    //     {
+    //         flag = 1.0;
+    //         // _GridMiddle[id.x + id.y * Resolution] = 1.0;
+    //         // Result[id.xy] = float4(0.0, 1.0, 0.0, 1.0);
+    //     }
+    //     else
+    //     {
+    //         flag = 0.0;
+    //     }
+    // }
+    // else
+    // {
+    //     if(count == 3.0)
+    //     {
+    //         // _Grid[id.x + id.y * Resolution] = 1.0;
+    //         flag = 1.0;
+    //         // Result[id.xy] = float4(0.0, 1.0, 0.0, 1.0);
+    //     }
+    //     else
+    //     {
+    //         flag = 0.0;
+    //     }
+    // }
+
+    if(Result[id.xy].x > 0)
+    {
+        Result[id.xy] = (count == 2 || count == 3) ? float4(1, 1, 1, 1) : float4(0,0,0,1);
+    }
+    else
+    {
+        Result[id.xy] = (count == 3) ? float4(1, 1, 1, 1) : float4(0,0,0,1);
+    }
+    // Middle[id.xy] = Result[id.xy];
+
+    // float val = _GridMiddle[id.x + id.y * Resolution];
+    // Result[id.xy] = float4(flag, flag, flag, 1.0);
+    // count = clamp(count, 0.0, 1.0);
+    // float flag = count / 50.0;
+    // _Grid[id.x + id.y * Resolution] = flag;
+    // Middle[id.x + id.y * Resolution] = flag;
+    // float flag = (id.x + id.y * Resolution) / (512.0 * 512.0);
+    // float flag = _Grid[id.x + id.y * Resolution];
+    // Result[id.xy] = float4(count, count, count, 1.0);
+    // Result[id.xy] = float4(flag,flag,flag, 1.0);
+    // Result[id.xy] = float4(flag,flag,flag, 1.0);
+}
