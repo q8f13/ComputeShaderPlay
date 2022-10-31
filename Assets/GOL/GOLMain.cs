@@ -104,7 +104,7 @@ public class GOLMain : MonoBehaviour
             }
             else
             {
-                Vector2 lp = UIUtils.ScreenToRectPos(Input.mousePosition, _imgRt, _canvas);
+                Vector2 lp = qfTools.UIUtils.ScreenToRectPos(Input.mousePosition, _imgRt, _canvas);
 
                 int x = Mathf.RoundToInt(lp.x) + RES/2;
                 int y = Mathf.RoundToInt(lp.y) + RES/2;
